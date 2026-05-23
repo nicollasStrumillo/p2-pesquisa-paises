@@ -25,6 +25,7 @@ export default function App() {
   const [nomePais, setNomePais] = useState('');
   const [resultados, setResultados] = useState<Resposta[]>([]);
   const [mensagem, setMensagem] = useState('');
+  const [modoCapital, setModoCapital] = useState(false);
 
   const pesquisarPais = () => {
     const termo = nomePais.trim();
@@ -36,6 +37,7 @@ export default function App() {
     }
 
     setMensagem('');
+    setModoCapital(false);
 
     restCountriesClient
       .get(`/name/${encodeURIComponent(termo)}`)
@@ -48,18 +50,46 @@ export default function App() {
       });
   };
 
+  const pesquisarPorCapital = () => {
+    const termo = nomePais.trim();
+
+    if (!termo) {
+      setResultados([]);
+      setMensagem('Digite o nome de uma capital.');
+      return;
+    }
+
+    setMensagem('');
+    setModoCapital(true);
+
+    restCountriesClient
+      .get(`/capital/${encodeURIComponent(termo)}`)
+      .then((response) => {
+        setResultados(response.data);
+      })
+      .catch(() => {
+        setResultados([]);
+        setMensagem('Nenhum país encontrado para essa capital.');
+      });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pesquisa de Países</Text>
       <TextInput
         style={styles.input}
-        placeholder="Digite o nome de um país"
+        placeholder="Digite o nome de um país ou sua capital"
         value={nomePais}
         onChangeText={setNomePais}
       />
-      <Pressable style={styles.button} onPress={pesquisarPais}>
-        <Text style={styles.buttonText}>Pesquisar país</Text>
-      </Pressable>
+      <View style={styles.buttonRow}>
+        <Pressable style={[styles.button, styles.buttonMetade]} onPress={pesquisarPais}>
+          <Text style={styles.buttonText}>Pesquisar por nome</Text>
+        </Pressable>
+        <Pressable style={[styles.buttonCapital, styles.buttonMetade]} onPress={pesquisarPorCapital}>
+          <Text style={styles.buttonCapitalText}>Pesquisar por capital</Text>
+        </Pressable>
+      </View>
 
       {mensagem && <Text style={styles.message}>{mensagem}</Text>}
 
@@ -69,25 +99,37 @@ export default function App() {
         keyExtractor={(item) => item.name.common}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>{item.name.common}</Text>
-            <Text style={styles.cardText}>Nome oficial: {item.name.official}</Text>
-            <Text style={styles.cardText}>
-              Nome em russo: {item.translations?.rus?.common || 'Não disponível'}
-            </Text>
-            <Text
-              style={styles.link}
-              onPress={() => {
-                if (item.maps?.openStreetMaps) {
-                  Linking.openURL(item.maps.openStreetMaps);
-                }
-              }}
-            >
-              OpenStreetMap: {item.maps?.openStreetMaps ?? 'Não disponível'}
-            </Text>
-            <Image
-              source={{ uri: item.flags?.png }}
-              style={styles.foto}
-            />
+            {modoCapital ? (
+              <View>
+                <Text style={styles.cardText}>{item.name.official}</Text>
+                <Image
+                  source={{ uri: item.flags?.png }}
+                  style={styles.foto}
+                />
+              </View>
+            ) : (
+              <View>
+                <Text style={styles.cardTitle}>{item.name.common}</Text>
+                <Text style={styles.cardText}>Nome oficial: {item.name.official}</Text>
+                <Text style={styles.cardText}>
+                  Nome em russo: {item.translations?.rus?.common || 'Não disponível'}
+                </Text>
+                <Text
+                  style={styles.link}
+                  onPress={() => {
+                    if (item.maps?.openStreetMaps) {
+                      Linking.openURL(item.maps.openStreetMaps);
+                    }
+                  }}
+                >
+                  OpenStreetMap: {item.maps?.openStreetMaps ?? 'Não disponível'}
+                </Text>
+                <Image
+                  source={{ uri: item.flags?.png }}
+                  style={styles.foto}
+                />
+              </View>
+            )}
           </View>
         )}
       />
@@ -98,22 +140,22 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f4',
-    paddingTop: 72,
-    paddingHorizontal: 20,
+    backgroundColor: '#242323',
+    paddingTop: 74,
+    paddingHorizontal: 22,
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 27,
     fontWeight: '700',
-    color: '#1f1f1f',
+    color: '#fcfcfc',
     marginBottom: 20,
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#bdbdbd',
-    borderRadius: 8,
+    borderColor: '#000000',
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     backgroundColor: '#fff',
@@ -122,23 +164,45 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 12,
     width: '100%',
-    backgroundColor: '#2f2f2f',
+    backgroundColor: '#f0f0f0',
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonCapital: {
+    marginTop: 12,
+    width: '100%',
+    backgroundColor: '#1080c2',
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: '#000000',
+    fontWeight: '600',
+  },
+  buttonCapitalText: {
+    color: '#ffffff',
     fontWeight: '600',
   },
   message: {
     marginTop: 16,
-    color: '#5a5a5a',
+    color: '#ffffff',
     textAlign: 'center',
   },
   list: {
     width: '100%',
     marginTop: 20,
+  },
+  buttonRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 12,
+  },
+  buttonMetade: {
+    width: '49%',
   },
   card: {
     backgroundColor: '#fff',
