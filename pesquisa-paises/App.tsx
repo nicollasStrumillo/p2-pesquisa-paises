@@ -124,10 +124,6 @@ export default function App() {
                 >
                   OpenStreetMap: {item.maps?.openStreetMaps ?? 'Não disponível'}
                 </Text>
-                <Image
-                  source={{ uri: item.flags?.png }}
-                  style={styles.foto}
-                />
               </View>
             )}
           </View>
